@@ -101,15 +101,17 @@ https://istio.io/latest/docs/tasks/observability/gateways/
 
 # Dashboard Setup
 
-https://docs.k3s.io/installation/kube-dashboard#:~:text=To%20access%20the%20Dashboard%20you,the%20admin%2Duser%20Bearer%20Token
+https://docs.k3s.io/installation/kube-dashboard
 
-[Download Dashboard Gateway Manifest](file://dashboard-gateway.yaml "Download Dashboard Gateway Manifest")
-
+##### Enable External Access to Dashboard
 ```bash
-kubectl create -f dashboard-gateway.yaml
+kubectl create -f https://raw.githubusercontent.com/mnikita/setup-cluster-k3s/main/manifests/dashboard-gateway.yaml
 ```
 
 Set `dashboard.example.com` into `/etc/hosts` file with control node IP
 
+Create access token for login
 
-
+```bash
+kubectl -n kubernetes-dashboard create token admin-user
+```
