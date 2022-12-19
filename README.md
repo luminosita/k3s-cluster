@@ -105,7 +105,7 @@ https://docs.k3s.io/installation/kube-dashboard
 
 ##### Enable External Access to Dashboard
 ```bash
-kubectl create -f https://raw.githubusercontent.com/mnikita/setup-cluster-k3s/main/manifests/dashboard-gateway.yaml
+kubectl create -f https://raw.githubusercontent.com/mnikita/setup-cluster-k3s/main/resources/dashboard-gateway.yaml
 ```
 
 Set `dashboard.example.com` into `/etc/hosts` file with control node IP

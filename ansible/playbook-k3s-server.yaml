@@ -1,7 +1,9 @@
 - name: Deploy K3S control node
   hosts: k3s_control_node
+
   tasks:
   - include_tasks: bootstrap.yaml
+
   - name: Install Python packages for the module "kubernetes.core.k8s"
     ansible.builtin.pip:
       name: " {{ item }}"
@@ -11,10 +13,9 @@
       - jsonpatch
 
   - name: Check if Service Exists
-    ansible.builtin.stat: path=/etc/systemd/system/k3s.service
+    ansible.builtin.stat: "path={{ k3s_service_path }}"
     register: k3s_service_status
 
-    #TODO: externalize cluster-cidr
   - name: Deploy K3s server
     block:
     - name: Run K3s deployment script in server mode
@@ -22,18 +23,18 @@
         cmd: curl -sfL https://get.k3s.io | sh -
       environment:
         K3S_KUBECONFIG_MODE: "644"
-        INSTALL_K3S_EXEC: "--flannel-backend=none --cluster-cidr=10.10.0.0/16 --disable-network-policy --disable=traefik"
+        INSTALL_K3S_EXEC: "--flannel-backend=none --cluster-cidr={{ cluster_cidr }} --disable-network-policy --disable=traefik"
     when: not k3s_service_status.stat.exists
 
   - name: Check if Service Exists
-    stat: path=~/.kube/config
+    stat: "path={{ kube_config_path }}"
     register: kubeconfig_status
 
   - name: Setup kubeconfig for user
     ansible.builtin.command: "{{ item }}"
     with_items:
-      - mkdir -p ~/.kube
-      - cp -n /etc/rancher/k3s/k3s.yaml ~/.kube/config
+      - "mkdir -p {{ kube_config_folder }}"
+      - "cp -n {{ k3s_yaml_path }} {{ kube_config_path }}"
     when: not kubeconfig_status.stat.exists
 
   - name: Check if Calico Exists
@@ -61,24 +62,24 @@
         type: Ready
 
   - name: Replace k3s.yaml with control node IP
-    ansible.builtin.command: sed s_127.0.0.1_{{ ansible_host }}_ /etc/rancher/k3s/k3s.yaml
+    ansible.builtin.command: "sed s_127.0.0.1_{{ ansible_host }}_ {{ k3s_yaml_path }}"
     register: k3s_yaml
 
   - name: Copy node token to local file
     become: yes
     become_method: sudo
     ansible.builtin.fetch:
-      src: /var/lib/rancher/k3s/server/node-token
-      dest: /tmp/node-token
+      src: "{{ k3s_node_token_path }}"
+      dest: "{{ tmp_path }}/node-token"
       flat: yes
 
   - name: Copy control node IP address
-    local_action: copy content="{{ ansible_host }}" dest="/tmp/control-node-ip"
+    local_action: copy content="https://{{ ansible_host }}:6443" dest="{{ tmp_path }}/control-node-url"
 
   - name: Copy k3s.yaml with control node IP to local file
-    local_action: copy content="{{ k3s_yaml.stdout }}" dest="/tmp/k3s.yaml"
+    local_action: copy content="{{ k3s_yaml.stdout }}" dest="{{ tmp_path }}/k3s.yaml"
 
-  - name: Copy local k3s.yaml to local ~/.kube/config
+  - name: Copy local k3s.yaml to local kube config file
     ansible.builtin.debug:
-      msg: "To access K3s cluster copy /tmp/k3s.yaml to ~/.kube/config"
+      msg: "To access K3s cluster copy {{ tmp_path }}/k3s.yaml to {{ kube_config_path }}"
 

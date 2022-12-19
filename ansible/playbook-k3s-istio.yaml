@@ -1,5 +1,5 @@
 - name: Deploy Istio on K3s Control Node
-  hosts: k3s_test
+  hosts: k3s_control_node
 
   vars:
     istio_path: "./istio-{{ istio_version }}"
@@ -43,5 +43,3 @@
           when: k3s_istio_status.resources is defined and k3s_istio_status.resources|length == 0
 
       when: k3s_service_status.stat.exists
-
-
