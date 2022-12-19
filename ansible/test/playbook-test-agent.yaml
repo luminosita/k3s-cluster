@@ -1,0 +1,30 @@
+- name: Test
+  hosts: k3s_test_agent
+  vars:
+    node_token: "{{ lookup('file','/tmp/node-token') }}"
+    control_node_ip: "{{ lookup('file','/tmp/control-node-ip') }}"
+  tasks:
+  - name: Debug K3S_URL
+    ansible.builtin.debug:
+      msg: "K3S_URL: https://{{ control_node_ip }}:6443"
+      verbosity: 1
+
+  - name: Debug K3S_TOKEN
+    ansible.builtin.debug:
+      msg: "K3S_TOKEN: {{ node_token }}"
+      verbosity: 1
+
+  - name: Check if Service Exists
+    ansible.builtin.stat: path=/etc/systemd/system/k3s-agent.service
+    register: k3s_service_status
+
+  - name: Deploy K3s agent
+    block:
+    - name: Run K3s deployment script in server mode
+      ansible.builtin.shell:
+        cmd: curl -sfL https://get.k3s.io | sh -
+      environment:
+        K3S_URL: "https://{{ control_node_ip }}:6443"
+        K3S_TOKEN: "{{ node_token }}"
+    when: not k3s_service_status.stat.exists
+

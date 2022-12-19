@@ -1,0 +1,4 @@
+- name: Test Bootstrap
+  hosts: k3s_test
+  tasks:
+  - include_tasks: bootstrap.yaml

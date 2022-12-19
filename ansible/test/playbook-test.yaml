@@ -1,0 +1,25 @@
+- name: Test
+  hosts: k3s_test
+  tasks:
+  - name: Replace k3s.yaml with control node IP
+    ansible.builtin.command: sed s_127.0.0.1_{{ ansible_host }}_ /etc/rancher/k3s/k3s.yaml
+    register: k3s_yaml
+
+  - name: Copy node token to local file
+    become: yes
+    become_method: sudo
+    ansible.builtin.fetch:
+      src: /var/lib/rancher/k3s/server/node-token
+      dest: /tmp/node-token
+      flat: yes
+
+  - name: Copy control node IP address
+    local_action: copy content="{{ ansible_host }}" dest="/tmp/control-node-ip"
+
+  - name: Copy k3s.yaml with control node IP to local file
+    local_action: copy content="{{ k3s_yaml.stdout }}" dest="/tmp/k3s.yaml"
+
+  - name: Copy local k3s.yaml to local ~/.kube/config
+    ansible.builtin.debug:
+      msg: "To access K3s cluster copy /tmp/k3s.yaml to ~/.kube/config"
+

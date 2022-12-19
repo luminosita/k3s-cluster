@@ -1,0 +1,84 @@
+- name: Deploy K3S control node
+  hosts: k3s_control_node
+  tasks:
+  - include_tasks: bootstrap.yaml
+  - name: Install Python packages for the module "kubernetes.core.k8s"
+    ansible.builtin.pip:
+      name: " {{ item }}"
+    loop:
+      - kubernetes
+      - PyYAML
+      - jsonpatch
+
+  - name: Check if Service Exists
+    ansible.builtin.stat: path=/etc/systemd/system/k3s.service
+    register: k3s_service_status
+
+    #TODO: externalize cluster-cidr
+  - name: Deploy K3s server
+    block:
+    - name: Run K3s deployment script in server mode
+      ansible.builtin.shell:
+        cmd: curl -sfL https://get.k3s.io | sh -
+      environment:
+        K3S_KUBECONFIG_MODE: "644"
+        INSTALL_K3S_EXEC: "--flannel-backend=none --cluster-cidr=10.10.0.0/16 --disable-network-policy --disable=traefik"
+    when: not k3s_service_status.stat.exists
+
+  - name: Check if Service Exists
+    stat: path=~/.kube/config
+    register: kubeconfig_status
+
+  - name: Setup kubeconfig for user
+    ansible.builtin.command: "{{ item }}"
+    with_items:
+      - mkdir -p ~/.kube
+      - cp -n /etc/rancher/k3s/k3s.yaml ~/.kube/config
+    when: not kubeconfig_status.stat.exists
+
+  - name: Check if Calico Exists
+    kubernetes.core.k8s_info:
+      kind: Pod
+      namespace: calico-system
+    register: k3s_calico_status
+
+  - name: Deploy Calico CNI
+    ansible.builtin.command: "{{ item }}"
+    with_items:
+      - kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+      - kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
+    when: k3s_calico_status.resources is defined and k3s_calico_status.resources|length == 0
+
+  - name: Wait for Calico Pod to be in Running status
+    kubernetes.core.k8s_info:
+      kind: Pod
+      namespace: calico-system
+      label_selectors:
+        - app.kubernetes.io/name=calico-node
+      wait: yes
+      wait_condition:
+        status: True
+        type: Ready
+
+  - name: Replace k3s.yaml with control node IP
+    ansible.builtin.command: sed s_127.0.0.1_{{ ansible_host }}_ /etc/rancher/k3s/k3s.yaml
+    register: k3s_yaml
+
+  - name: Copy node token to local file
+    become: yes
+    become_method: sudo
+    ansible.builtin.fetch:
+      src: /var/lib/rancher/k3s/server/node-token
+      dest: /tmp/node-token
+      flat: yes
+
+  - name: Copy control node IP address
+    local_action: copy content="{{ ansible_host }}" dest="/tmp/control-node-ip"
+
+  - name: Copy k3s.yaml with control node IP to local file
+    local_action: copy content="{{ k3s_yaml.stdout }}" dest="/tmp/k3s.yaml"
+
+  - name: Copy local k3s.yaml to local ~/.kube/config
+    ansible.builtin.debug:
+      msg: "To access K3s cluster copy /tmp/k3s.yaml to ~/.kube/config"
+
