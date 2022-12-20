@@ -37,8 +37,6 @@ locals {
       content = value
     }
   ])
-
-  ingressgateway_ip = kubernetes_service.istio-ingressgateway.status.0.load_balancer.0.ingress.0.ip
 }
 
 data "http" "istio_bookinfo_file" {
