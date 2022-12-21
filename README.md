@@ -4,35 +4,10 @@
 
 - Ansible
 - Terraform
-- Multipass
 
-# Create Multipass Hosts
+Create and start host images using VMWare or Multipass as described in corresponding tutorials
 
-##### Create Host
-
-```bash
-$ multipass find
-$ multipass launch -n HOSTNAME -m 2G -d 30G -c 2 jammy
-```
-
-Replace HOSTNAME with unique host name
-
-##### Open Shell
-
-```bash
-$ multipass shell HOSTNAME
-```
-
-##### Start/Stop Host
-
-```bash
-$ multipass start [HOSTNAME]
-$ multipass stop [HOSTNAME]
-```
-
-`HOSTNAME` is optional. If not specified it will start/stop all available instances
-
-# SSH Keys
+### SSH Keys
 Append `~.ssh/id_rsa.pub` from controller host to each host's `~/.ssh/authorized_keys`
 
 ```bash
@@ -43,12 +18,12 @@ EOF
 
 Verify SSH Access for each host by opening ssh connection
 ```bash
-$ ssh ubuntu@<<HOST_IP>>
+$ ssh ubuntu@[HOST_IP]
 ```
 
 In case of connection issues verify `.ssh/known_hosts` on controller's host
 
-# K3s Cluster Setup
+## K3s Cluster Setup
 
 ```bash
 $ cd ansible
@@ -114,7 +89,7 @@ $ terraform apply
 
 Add entries to `/etc/hosts` on controller host
 ```bash
-<<SERVER_HOST_IP>> dashboard.k3s.local
+[SERVER_HOST_IP] dashboard.k3s.local
 ```
 
 Create access token for dashboard login. Needs to be executed on server host
@@ -143,10 +118,10 @@ $ terraform apply
 
 Add entries to `/etc/hosts` on controller host
 ```bash
-<<SERVER_HOST_IP>> kiali.k3s.local
-<<SERVER_HOST_IP>> grafana.k3s.local
-<<SERVER_HOST_IP>> prometheus.k3s.local
-<<SERVER_HOST_IP>> tracking.k3s.local
+[SERVER_HOST_IP] kiali.k3s.local
+[SERVER_HOST_IP] grafana.k3s.local
+[SERVER_HOST_IP] prometheus.k3s.local
+[SERVER_HOST_IP] tracking.k3s.local
 ```
 # Access Dashboards
 
