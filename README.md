@@ -1,13 +1,21 @@
-# Multipass Setup
+# Create K3s Installation
 
-##### Create Node
+##### Requirements
+
+- Ansible
+- Terraform
+- Multipass
+
+# Create Multipass Hosts
+
+##### Create Host
 
 ```bash
 multipass find
 multipass launch -n HOSTNAME -m 2G -d 30G -c 2 jammy
 ```
 
-Replace HOSTNAME with node's host name
+Replace HOSTNAME with unique host name
 
 ##### Open Shell
 
@@ -15,7 +23,7 @@ Replace HOSTNAME with node's host name
 multipass shell HOSTNAME
 ```
 
-##### Start/Stop Node
+##### Start/Stop Host
 
 ```bash
 multipass start [HOSTNAME]
@@ -25,7 +33,7 @@ multipass stop [HOSTNAME]
 `HOSTNAME` is optional. If not specified it will start/stop all available instances
 
 # SSH Keys
-Append `~.ssh/id_rsa.pub` from controller machine to each node's `~/.ssh/authorized_keys`
+Append `~.ssh/id_rsa.pub` from controller host to each host's `~/.ssh/authorized_keys`
 
 ```bash
 tee -a .ssh/authorized_keys <<EOF
@@ -33,101 +41,121 @@ tee -a .ssh/authorized_keys <<EOF
 EOF
 ```
 
-#### Verify SSH access
+Verify SSH Access for each host by opening ssh connection
 ```bash
-ssh ubuntu@<<NODE_IP>>
+ssh ubuntu@<<HOST_IP>>
 ```
 
-In case of connection issues verify `.ssh/known_hosts` on controller's machine
+In case of connection issues verify `.ssh/known_hosts` on controller's host
 
 # K3s Cluster Setup
 
-##### Basic Setup for Each Node
-
 ```bash
-sudo apt update
-sudo apt upgrade
-sudo apt install net-tools
-sudo apt install emacs
-```
-##### Control Node
-
-```bash
-curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-backend=none --cluster-cidr=10.10.0.0/16 --disable-network-policy --disable=traefik" sh -
-kubectl create -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
-kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
-watch sudo k3s kubectl get pods --all-namespaces
+cd ansible
 ```
 
-Retrieve node token
+Set IP addresses for server and agent hosts in `inventory.yaml`
+
+Verify Ansible Ping
 
 ```bash
-sudo cat /var/lib/rancher/k3s/server/node-token
+ansible all -i inventory.yaml -m ping
 ```
 
-Use node token to join worker nodes
-
-##### Worker Node
+### Deploy K3s Server
 
 ```bash
-SERVER_HOST=xxx
+ansible-playbook -i inventory.yaml playbook-k3s-server.yaml
 ```
-Replace xxx with Control Node IP
+
+Upon successful server installation copy `k3s.yaml` to kubectl config location on controller's host
+```bash
+cp /tmp/k3s.yaml ~/.kube/config
+```
+### Deploy K3s Agents
 
 ```bash
-NODE_TOKEN=xxx
+ansible-playbook -i inventory.yaml playbook-k3s-agent.yaml
 ```
-Replace xxx with Control Node Token
+
+### Deploy Istio
 
 ```bash
-NODE_TOKEN=$(sudo cat /var/lib/rancher/k3s/server/node-token)
-curl -sfL https://get.k3s.io | K3S_URL=https://$SERVER_HOST:6443 K3S_TOKEN=$NODE_TOKEN sh -
+ansible-playbook -i inventory.yaml playbook-k3s-istio.yaml
 ```
 
-# Control Cluster
-
-##### Control Node
+##### Verify K3s Cluster
 
 ```bash
-sudo systemctl start k3s
-sudo systemctl stop k3s
+watch kubectl get node
 ```
-
-##### Worker Node
-
+Wait until all nodes are in Ready status
 ```bash
-sudo systemctl start k3s-agent
-sudo systemctl stop k3s-agent
+NAME             STATUS   ROLES                  AGE     VERSION
+k3s-test         Ready    control-plane,master   29m     v1.25.4+k3s1
+k3s-test-agent   Ready    <none>                 2m17s   v1.25.4+k3s1
 ```
 
-##### External Client Access
+# Configure K3s Cluster
 
-https://docs.k3s.io/cluster-access
-
-
-# Istio Setup
-
-https://istio.io/latest/docs/setup/getting-started/
-
-
-# Expose Kiali
-
-https://istio.io/latest/docs/tasks/observability/gateways/
-
-
-# Dashboard Setup
-
-https://docs.k3s.io/installation/kube-dashboard
-
-##### Enable External Access to Dashboard
+### Configure K8s Dashboard
 ```bash
-kubectl create -f https://raw.githubusercontent.com/mnikita/setup-cluster-k3s/main/resources/dashboard-gateway.yaml
+cd terraform/k8s-dashboard
+```
+Dashboard default ingress domain is `k3s.local` as defined in terraform `variables.tf` file
+
+Run Terraform
+```bash
+terraform init
+terraform plan
+terraform apply
 ```
 
-Set `dashboard.example.com` into `/etc/hosts` file with control node IP
+Add entries to `/etc/hosts` on controller host
+```bash
+<<SERVER_HOST_IP>> dashboard.k3s.local
+```
 
-Create access token for login
+Create access token for dashboard login. Needs to be executed on server host
 
 ```bash
 kubectl -n kubernetes-dashboard create token admin-user
 ```
+
+### Configure Istio
+
+```bash
+cd terraform/istio
+```
+
+Istio default ingress domain is `k3s.local` as defined in terraform `variables.tf` file
+
+Run Terraform
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Add entries to `/etc/hosts` on controller host
+```bash
+<<SERVER_HOST_IP>> kiali.k3s.local
+<<SERVER_HOST_IP>> grafana.k3s.local
+<<SERVER_HOST_IP>> prometheus.k3s.local
+<<SERVER_HOST_IP>> tracking.k3s.local
+```
+# Access Dashboards
+
+Open Kubernetes API proxy
+
+```bash
+kubectl proxy
+Starting to serve on 127.0.0.1:8001
+```
+[Access Kubernetes Dashboard via Proxy](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login)
+
+[Access Kubernetes Dashboard Direct Link](https://dashboard.k3s.local)
+
+[Access Kiali Dashboard Link via Proxy](http://localhost:8001/api/v1/namespaces/istio-system/services/kiali:20001/proxy/kiali)
+
+[Access Kiali Dashboard Direct Link](https://kiali.k3s.local)
