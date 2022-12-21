@@ -36,10 +36,6 @@
               ansible.builtin.shell:
                 cmd: istioctl install --set profile=demo -y
 
-            - name: Delete content & directory
-              ansible.builtin.file:
-                state: absent
-                path: "{{ istio_path }}"
           when: k3s_istio_status.resources is defined and k3s_istio_status.resources|length == 0
 
         - name: Define Gateway URL

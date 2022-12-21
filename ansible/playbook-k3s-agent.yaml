@@ -23,7 +23,7 @@
 
   - name: Deploy K3s agent
     block:
-      - name: Run K3s deployment script in server mode
+      - name: Run K3s deployment script in agent mode
         ansible.builtin.shell:
           cmd: curl -sfL https://get.k3s.io | sh -
         environment:

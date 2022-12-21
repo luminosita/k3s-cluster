@@ -24,6 +24,22 @@ multipass stop [HOSTNAME]
 
 `HOSTNAME` is optional. If not specified it will start/stop all available instances
 
+# SSH Keys
+Append `~.ssh/id_rsa.pub` from controller machine to each node's `~/.ssh/authorized_keys`
+
+```bash
+tee -a .ssh/authorized_keys <<EOF
+....... (content of .ssh/id_rsa.pub)
+EOF
+```
+
+#### Verify SSH access
+```bash
+ssh ubuntu@<<NODE_IP>>
+```
+
+In case of connection issues verify `.ssh/known_hosts` on controller's machine
+
 # K3s Cluster Setup
 
 ##### Basic Setup for Each Node

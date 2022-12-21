@@ -1,5 +1,8 @@
 terraform {
   required_providers {
+    local = {
+      source = "hashicorp/local"
+    }
     http = {
       source = "hashicorp/http"
     }
@@ -9,80 +12,40 @@ terraform {
   }
 }
 
-variable "istio_version" {
-  type = string
-}
-
-variable "istio_repo" {
-  type = string
-}
-
-variable "emisia_repo" {
-  type = string
-}
-
 locals {
   istio_addons_path        = "/samples/addons/"
-  istio_addons_raw_path    = "${var.istio_repo}${var.istio_version}${local.istio_addons_path}"
-  istio_addons_raw_gateway = "${var.emisia_repo}"
-  istio_addons_manifests = [
+
+  url_docs = module.utils_yaml_document_parser.parser_url_docs
+  file_docs = module.utils_yaml_document_parser.parser_file_docs
+}
+
+module "utils_yaml_document_parser" {
+  source = "../../utils/yaml_document_parser"
+
+  parser_url_names = [
     "grafana.yaml",
     "jaeger.yaml",
     "kiali.yaml",
     "prometheus.yaml"
   ]
-  istio_addons_gateway_manifests = [
+
+  parser_file_names = [
     "grafana-gateway.yaml",
     "tracing-gateway.yaml",
     "kiali-gateway.yaml",
     "prometheus-gateway.yaml"
   ]
 
-  docs = flatten([
-    for key in local.istio_addons_manifests : [
-      for id, value in data.kubectl_file_documents.istio_addons_manifests[key].manifests : {
-        docId   = "${key}=>${id}"
-        content = value
-      }
-    ]
-  ])
-
-  gateway_docs = flatten([
-    for key in local.istio_addons_gateway_manifests : [
-      for id, value in data.kubectl_file_documents.istio_addons_gateway_manifests[key].manifests : {
-        docId   = "${key}=>${id}"
-        content = value
-      }
-    ]
-  ])
-}
-
-data "http" "istio_addons_files" {
-  for_each = toset(local.istio_addons_manifests)
-  url      = "${local.istio_addons_raw_path}${each.value}"
-}
-
-data "http" "istio_addons_gateway_files" {
-  for_each = toset(local.istio_addons_gateway_manifests)
-  url      = "${local.istio_addons_raw_gateway}${each.value}"
-}
-
-data "kubectl_file_documents" "istio_addons_manifests" {
-  for_each = toset(local.istio_addons_manifests)
-  content  = data.http.istio_addons_files[each.key].response_body
-}
-
-data "kubectl_file_documents" "istio_addons_gateway_manifests" {
-  for_each = toset(local.istio_addons_gateway_manifests)
-  content  = data.http.istio_addons_gateway_files[each.key].response_body
+  parser_url_path = "${var.istio_repo}${var.istio_version}${local.istio_addons_path}"
+  parser_file_path = "${var.local_path}"
 }
 
 resource "kubectl_manifest" "istio_addons_resources" {
-  for_each  = { for doc in local.docs : doc.docId => doc.content }
+  for_each  = { for doc in local.url_docs : doc.docId => doc.content }
   yaml_body = each.value
 }
 
 resource "kubectl_manifest" "istio_addons_gateway_resources" {
-  for_each  = { for doc in local.gateway_docs : doc.docId => doc.content }
-  yaml_body = each.value
+  for_each  = { for doc in local.file_docs : doc.docId => doc.content }
+  yaml_body = replace(each.value, "${"$"}{INGRESS_DOMAIN}", "${var.ingress_domain}")
 }

@@ -10,6 +10,6 @@ output "istio_bookinfo_resources" {
   value = "${module.istio_bookinfo_module.istio_bookinfo_resources}"
 }
 
-output "istio_bookinfo_gateway_resources" {
-  value = "${module.istio_bookinfo_module.istio_bookinfo_gateway_resources}"
+output "istio_cert_manager_resources" {
+  value = "${ module.istio_cert_manager_module.istio_cert_manager_resources }"
 }

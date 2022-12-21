@@ -1,5 +1,5 @@
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   name: dashboard-gateway
@@ -15,16 +15,16 @@ spec:
     tls:
       mode: PASSTHROUGH
     hosts:
-    - dashboard.example.com
+    - dashboard.${INGRESS_DOMAIN}
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: kubernetes-dashboard
   namespace: kubernetes-dashboard
 spec:
   hosts:
-  - dashboard.example.com
+  - dashboard.${INGRESS_DOMAIN}
   gateways:
   - dashboard-gateway
   http:
@@ -32,7 +32,7 @@ spec:
   - match:
     - port: 443
       sniHosts:
-      - dashboard.example.com
+      - dashboard.${INGRESS_DOMAIN}
     route:
     - destination:
         host: kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local

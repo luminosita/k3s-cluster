@@ -60,6 +60,31 @@
       wait_condition:
         status: True
         type: Ready
+      wait_timeout: 600
+
+  - name: Check if Cert Manager Exists
+    kubernetes.core.k8s_info:
+      kind: Pod
+      namespace: cert-manager
+    register: k3s_certmgr_status
+
+  - name: Deploy Cert Manager
+    ansible.builtin.command: "{{ item }}"
+    with_items:
+      - kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.10.1/cert-manager.yaml
+    when: k3s_certmgr_status.resources is defined and k3s_certmgr_status.resources|length == 0
+
+  - name: Wait for Cert Manager to be in Running status
+    kubernetes.core.k8s_info:
+      kind: Pod
+      namespace: calico-system
+      label_selectors:
+        - app.kubernetes.io/name=calico-node
+      wait: yes
+      wait_condition:
+        status: True
+        type: Ready
+      wait_timeout: 120
 
   - name: Replace k3s.yaml with control node IP
     ansible.builtin.command: "sed s_127.0.0.1_{{ ansible_host }}_ {{ k3s_yaml_path }}"

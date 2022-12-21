@@ -9,50 +9,21 @@ terraform {
   }
 }
 
-variable "istio_version" {
-  type = string
-}
-
-variable "istio_repo" {
-  type = string
-}
-
 locals {
   istio_bookinfo_namespace   = "istio-bookinfo"
-  istio_bookinfo_path        = "/samples/bookinfo/platform/kube/bookinfo.yaml"
-  istio_bookinfo_gateway     = "/samples/bookinfo/networking/bookinfo-gateway.yaml"
-  istio_bookinfo_raw_path    = "${var.istio_repo}${var.istio_version}${local.istio_bookinfo_path}"
-  istio_bookinfo_raw_gateway = "${var.istio_repo}${var.istio_version}${local.istio_bookinfo_gateway}"
 
-  docs = flatten([
-    for id, value in data.kubectl_file_documents.istio_bookinfo_manifests.manifests : {
-      docId   = id
-      content = value
-    }
-  ])
-
-  gateway_docs = flatten([
-    for id, value in data.kubectl_file_documents.istio_bookinfo_gateway_manifests.manifests : {
-      docId   = id
-      content = value
-    }
-  ])
+  url_docs = module.utils_yaml_document_parser.parser_url_docs
 }
 
-data "http" "istio_bookinfo_file" {
-  url = local.istio_bookinfo_raw_path
-}
+module "utils_yaml_document_parser" {
+  source = "../../utils/yaml_document_parser"
 
-data "http" "istio_bookinfo_gateway_file" {
-  url = local.istio_bookinfo_raw_gateway
-}
+  parser_url_names = [
+    "/samples/bookinfo/platform/kube/bookinfo.yaml",
+    "/samples/bookinfo/networking/bookinfo-gateway.yaml"
+  ]
 
-data "kubectl_file_documents" "istio_bookinfo_manifests" {
-  content = data.http.istio_bookinfo_file.response_body
-}
-
-data "kubectl_file_documents" "istio_bookinfo_gateway_manifests" {
-  content = data.http.istio_bookinfo_gateway_file.response_body
+  parser_url_path = "${var.istio_repo}${var.istio_version}"
 }
 
 resource "kubernetes_namespace" "istio_bookinfo_namespace" {
@@ -66,13 +37,8 @@ resource "kubernetes_namespace" "istio_bookinfo_namespace" {
 }
 
 resource "kubectl_manifest" "istio_bookinfo_resources" {
-  for_each           = data.kubectl_file_documents.istio_bookinfo_manifests.manifests
-  yaml_body          = each.value
-  override_namespace = kubernetes_namespace.istio_bookinfo_namespace.metadata[0].name
-}
+  for_each           = { for doc in local.url_docs : doc.docId => doc.content }
 
-resource "kubectl_manifest" "istio_bookinfo_gateway_resources" {
-  for_each           = data.kubectl_file_documents.istio_bookinfo_gateway_manifests.manifests
   yaml_body          = each.value
   override_namespace = kubernetes_namespace.istio_bookinfo_namespace.metadata[0].name
 }

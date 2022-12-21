@@ -1,7 +1,7 @@
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
-  name: kiali-gateway
+  name: prometheus-gateway
   namespace: istio-system
 spec:
   selector:
@@ -9,38 +9,38 @@ spec:
   servers:
     - port:
         number: 443
-        name: https-kiali
+        name: https-prom
         protocol: HTTPS
       tls:
         mode: SIMPLE
-        credentialName: telemetry-gw-cert
+        credentialName: telemetry-gw-secret
       hosts:
-        - "kiali.${INGRESS_DOMAIN}"
+        - "prometheus.${INGRESS_DOMAIN}"
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: kiali-vs
+  name: prometheus-vs
   namespace: istio-system
 spec:
   hosts:
-    - "kiali.${INGRESS_DOMAIN}"
+    - "prometheus.${INGRESS_DOMAIN}"
   gateways:
-    - kiali-gateway
+    - prometheus-gateway
   http:
     - route:
         - destination:
-            host: kiali
+            host: prometheus
             port:
-              number: 20001
+              number: 9090
 ---
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: kiali
+  name: prometheus
   namespace: istio-system
 spec:
-  host: kiali
+  host: prometheus
   trafficPolicy:
     tls:
       mode: DISABLE
