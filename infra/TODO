@@ -14,3 +14,8 @@ Difference between VDI and VMDK (resizing)
 Terraform Ansible Vagrant Template File Inventory
 
 Start/stop k3s server and k3s agents
+
+etcd for k3s ???
+Deploy Dex
+
+VMWare Fusion Provider

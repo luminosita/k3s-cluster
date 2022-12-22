@@ -40,7 +40,7 @@ $ ansible all -i inventory.yaml -m ping
 ### Deploy K3s Server
 
 ```bash
-$ ansible-playbook -i inventory.yaml playbook-k3s-server.yaml
+$ ansible-playbook -i inventory.yaml k3s-server.yaml
 ```
 
 Upon successful server installation copy `k3s.yaml` to kubectl config location on controller's host
@@ -50,13 +50,13 @@ $ cp /tmp/k3s.yaml ~/.kube/config
 ### Deploy K3s Agents
 
 ```bash
-$ ansible-playbook -i inventory.yaml playbook-k3s-agent.yaml
+$ ansible-playbook -i inventory.yaml k3s-agent.yaml
 ```
 
 ### Deploy Istio
 
 ```bash
-$ ansible-playbook -i inventory.yaml playbook-k3s-istio.yaml
+$ ansible-playbook -i inventory.yaml k3s-istio.yaml
 ```
 
 ##### Verify K3s Cluster

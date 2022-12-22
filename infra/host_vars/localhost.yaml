@@ -1,0 +1,5 @@
+terraform:
+  production:
+    environment: "production"
+  staging:
+    environment: "staging"

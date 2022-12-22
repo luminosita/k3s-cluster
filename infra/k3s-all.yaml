@@ -1,0 +1,4 @@
+- name: K3s Bootstrap
+  hosts: all
+  roles:
+    - k3s
