@@ -21,6 +21,7 @@ k3s_worker_nodes:
       ansible_host: 192.168.50.13
   vars:
     ansible_user: vagrant
+    control_node_url: https://192.168.50.11:6443
     k3s_service_path: /etc/systemd/system/k3s-agent.service
     tmp_path: /tmp
 

@@ -3,7 +3,7 @@
 
   vars:
     node_token: "{{ lookup('file','{{ tmp_path }}/node-token') }}"
-    control_node_url: "{{ lookup('file','{{ tmp_path }}/control-node-url') }}"
+
   tasks:
   - include_tasks: bootstrap.yaml
 

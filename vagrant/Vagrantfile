@@ -19,6 +19,7 @@ Vagrant.configure("2") do |config|
            "tmp_path": "/tmp"
         },
         "k3s_worker_nodes:vars" => {
+           "control_node_url" => "https:/#{hosts[0]}:6443",
            "k3s_service_path" => "/etc/systemd/system/k3s-agent.service",
            "tmp_path" => "/tmp"
         }
@@ -48,17 +49,17 @@ Vagrant.configure("2") do |config|
     end
 
     config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../../ansible/playbook-k3s-server.yaml"
+        ansible.playbook = "../ansible/playbook-k3s-server.yaml"
         ansible.groups = ansible_groups
     end
 
     config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../../ansible/playbook-k3s-agent.yaml"
+        ansible.playbook = "../ansible/playbook-k3s-agent.yaml"
         ansible.groups = ansible_groups
     end
 
     config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../../ansible/playbook-k3s-istio.yaml"
+        ansible.playbook = "../ansible/playbook-k3s-istio.yaml"
         ansible.groups = ansible_groups
     end
 end
