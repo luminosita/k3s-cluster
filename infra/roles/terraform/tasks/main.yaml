@@ -1,0 +1,64 @@
+- name: Make vagrant tmp folder
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/terraform/tmp"
+    state: directory
+    mode: '0755'
+
+- name: Init Terraform
+  shell: |
+    cd {{ playbook_dir }}/terraform;
+    terraform init
+    terraform workspace new {{ env }}
+  when: (operation == "init")
+  register: init
+
+- name: 'Display output: Init Terraform'
+  debug:
+    msg: "{{ init.stdout }}"
+  when: (operation == "init")
+
+- name: Substitute tfvars
+  template:
+    src: templates/tfvars.j2
+    dest: "{{ playbook_dir }}/terraform/tmp/env.tfvars"
+  when: (operation == "plan")
+
+- name: Create resources - Plan
+  shell: |
+    cd {{ playbook_dir }}/terraform;
+    terraform workspace select {{ env }}
+    terraform plan -var-file=tmp/env.tfvars -out=tmp/plan.tfplan;
+  when: (operation == "plan")
+  register: create_plan
+
+- name: 'Display output: Create resources - Plan'
+  debug:
+    msg: "{{ create_plan.stdout }}"
+  when: (operation == "plan")
+
+- name: Create resources
+  shell: |
+    cd {{ playbook_dir }}/terraform;
+    terraform workspace select {{ env }}
+    terraform apply tmp/plan.tfplan
+  when: (operation == "apply")
+  register: create
+
+- name: 'Display output: Create resources'
+  debug:
+    msg: "{{ create.stdout }}"
+  when: (operation == "apply")
+
+- name: Destroy resources
+  shell: |
+    cd {{ playbook_dir }}/terrafform;
+    terraform workspace new {{ env }}
+    terraform workspace select {{ env }}
+    terraform destroy -var-file=tmp/env.tfvars -auto-approve
+  when: (operation == "destroy")
+  register: destroy
+
+- name: 'Display output: Destroy resources'
+  debug:
+    msg: "{{ destroy.stdout }}"
+  when: (operation == "destroy")

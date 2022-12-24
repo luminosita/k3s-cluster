@@ -1,0 +1,2 @@
+node_token: "{{ lookup('file','/tmp/node-token') }}"
+control_node_url: "{{ lookup('file','/tmp/control-node-url') }}"

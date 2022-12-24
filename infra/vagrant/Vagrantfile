@@ -1,0 +1,40 @@
+require 'yaml'
+
+if (File.exists?(".vagrant/hosts"))
+    current_dir  = File.dirname(File.expand_path(__FILE__))
+    hosts        = YAML.load_file(".vagrant/hosts")
+    puts "Hosts: #{hosts}"
+else
+    puts "ERROR: Hosts file .vagrant/hosts does not exist!"
+    exit 1
+end
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "ubuntu-22.04.1-x86_64"
+
+    config.ssh.insert_key = false
+    config.ssh.forward_agent = true
+    config.vm.synced_folder ".", "/vagrant", id: "vagrant-root", disabled: true
+
+    hosts.each do |name|
+        config.vm.define name do |machine|
+            machine.vm.network :private_network
+            machine.vm.hostname = name
+
+            machine.vm.provider "vmware_fusion" do |v|
+                v.gui = true
+                v.ssh_info_public = true
+                v.linked_clone = true
+                v.vmx['displayname'] = name
+            end
+
+            machine.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/id_rsa.pub"
+            machine.vm.provision "ssh_keys", type: "shell" do |s|
+                s.path = "scripts/bootstrap.sh"
+                s.privileged = false
+            end
+        end
+    end
+end
+
+

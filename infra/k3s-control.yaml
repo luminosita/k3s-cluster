@@ -2,11 +2,3 @@
   hosts: k3s_control_nodes
   roles:
     - k3s
-
-  vars:
-    istio_version: 1.16.1
-    istio_path: "./istio-{{ istio_version }}"
-    cluster_cidr: 10.10.0.0/16
-
-  environment:
-    PATH: "{{ istio_path }}/bin:{{ ansible_env.PATH }}"

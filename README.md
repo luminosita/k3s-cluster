@@ -3,63 +3,73 @@
 ##### Requirements
 
 - Ansible
+- Vagrant
 - Terraform
 
-Create and start host images using VMWare or Multipass as described in corresponding tutorials
+### Create Cluster Nodes
 
-### SSH Keys
-Append `~.ssh/id_rsa.pub` from controller host to each host's `~/.ssh/authorized_keys`
+Initialise Vagrant environment
 
 ```bash
-$ tee -a .ssh/authorized_keys <<EOF
-....... (content of .ssh/id_rsa.pub)
-EOF
+$ sh start.sh vg-init staging 3
+```
+It will create`hosts` file in `vagrant/.vagrant` folder
+
+Create Vagrant VMs without provisioning. Shell provisioner causes some issues with `vmware_fusion` Vagrant provider
+
+```bash
+$ cd vagrant
+$ vagrant up --no-provision
 ```
 
-Verify SSH Access for each host by opening ssh connection
+After successful creation of Vagrant images and hosts run provisioning
+
 ```bash
-$ ssh ubuntu@[HOST_IP]
+$ vagrant provision
+$ cd ..
 ```
 
-In case of connection issues verify `.ssh/known_hosts` on controller's host
-
-## K3s Cluster Setup
+Create Ansible inventory file `inventory/k3s-cluster-inventory.yaml`
 
 ```bash
-$ cd ansible
+$ sh start.sh vg-inventory staging
 ```
 
-Set IP addresses for server and agent hosts in `inventory.yaml`
+### Install K3s Componentes
 
-Verify Ansible Ping
+Bootstrap all cluster nodes
 
 ```bash
-$ ansible all -i inventory.yaml -m ping
+$ sh start.sh k3s-bootstrap staging
 ```
 
-### Deploy K3s Server
+Install K3s Server on control nodes
 
 ```bash
-$ ansible-playbook -i inventory.yaml k3s-server.yaml
+$ sh start.sh k3s-server staging
+```
+
+Install K3s Agent on worker nodes
+
+```bash
+$ sh start.sh k3s-agent staging
+```
+
+Install K3s Istio components on control nodes
+
+```bash
+$ sh start.sh k3s-istio staging
 ```
 
 Upon successful server installation copy `k3s.yaml` to kubectl config location on controller's host
+
+#### Verify K3s installation
+
 ```bash
 $ cp /tmp/k3s.yaml ~/.kube/config
 ```
-### Deploy K3s Agents
 
-```bash
-$ ansible-playbook -i inventory.yaml k3s-agent.yaml
-```
-
-### Deploy Istio
-
-```bash
-$ ansible-playbook -i inventory.yaml k3s-istio.yaml
-```
-
-##### Verify K3s Cluster
+Verify connection to K3s cluster
 
 ```bash
 $ watch kubectl get node
@@ -69,27 +79,29 @@ k3s-test-agent   Ready    <none>                 2m17s   v1.25.4+k3s1
 ```
 Wait until all nodes are in Ready status
 
-# Configure K3s Cluster
+### Configure K3s Cluster
 
-### Configure K8s Dashboard
-```bash
-$ cd terraform/k8s-dashboard
-```
-Dashboard default ingress domain is `k3s.local` as defined in terraform `variables.tf` file
+Initialise Terraform environment
 
-Run Terraform
 ```bash
-$ terraform init
-...
-$ terraform plan
-...
-$ terraform apply
-...
+$ sh start.sh tf-init staging
 ```
 
+Install Modules (K8s Dashboard, Istio Cert Manager certificate, Istio Addons, Istio Book Info samples application)
+
+```bash
+$ sh start.sh tf-plan staging "k8s-dashboard,istio-cert-manager,istio-addons,istio-bookinfo"
+
+$ sh start.sh tf-apply staging
+```
 Add entries to `/etc/hosts` on controller host
 ```bash
 [SERVER_HOST_IP] dashboard.k3s.local
+
+[SERVER_HOST_IP] kiali.k3s.local
+[SERVER_HOST_IP] grafana.k3s.local
+[SERVER_HOST_IP] prometheus.k3s.local
+[SERVER_HOST_IP] tracking.k3s.local
 ```
 
 Create access token for dashboard login. Needs to be executed on server host
@@ -98,32 +110,7 @@ Create access token for dashboard login. Needs to be executed on server host
 $ kubectl -n kubernetes-dashboard create token admin-user
 ```
 
-### Configure Istio
-
-```bash
-$ cd terraform/istio
-```
-
-Istio default ingress domain is `k3s.local` as defined in terraform `variables.tf` file
-
-Run Terraform
-```bash
-$ terraform init
-...
-$ terraform plan
-...
-$ terraform apply
-...
-```
-
-Add entries to `/etc/hosts` on controller host
-```bash
-[SERVER_HOST_IP] kiali.k3s.local
-[SERVER_HOST_IP] grafana.k3s.local
-[SERVER_HOST_IP] prometheus.k3s.local
-[SERVER_HOST_IP] tracking.k3s.local
-```
-# Access Dashboards
+### Access Dashboards
 
 Open Kubernetes API proxy
 
@@ -138,3 +125,5 @@ Starting to serve on 127.0.0.1:8001
 [Access Kiali Dashboard Link via Proxy](http://localhost:8001/api/v1/namespaces/istio-system/services/kiali:20001/proxy/kiali)
 
 [Access Kiali Dashboard Direct Link](https://kiali.k3s.local)
+
+[Access Istio Book Info Sample App](http://k3s.local/productpage)

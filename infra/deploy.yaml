@@ -1,5 +1,0 @@
-- name: Apply configuration via localhost
-  hosts: localhost
-  connection: local
-  roles:
-    - tf

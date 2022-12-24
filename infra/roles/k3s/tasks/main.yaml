@@ -1,16 +1,19 @@
-- name: Bootstrap host
-  import_tasks: bootstrap.yaml
+- fail: msg="Operation is not defined"
+  when: (operation is undefined or operation|length == 0)
+
+- name: Include Bootstrap tasks
+  include_tasks: bootstrap.yaml
   when: (operation == "bootstrap")
 
-- name: K3s Server tasks
-  import_tasks: k3s-server.yaml
-  when: (operation == "k3s-server")
+- name: Include K3s Server tasks
+  include_tasks: server.yaml
+  when: (operation == "server")
 
-- name: K3s Agent tasks
-  import_tasks: k3s-agent.yaml
-  when: (operation == "k3s-agent")
+- name: Include K3s Agent tasks
+  include_tasks: agent.yaml
+  when: (operation == "agent")
 
-- name: K3s Istio tasks
-  import_tasks: k3s-istio.yaml
-  when: (operation == "k3s-istio")
+- name: Include K3s Istio tasks
+  include_tasks: istio.yaml
+  when: (operation == "istio")
 
