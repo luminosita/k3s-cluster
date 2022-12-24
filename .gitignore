@@ -1,0 +1,8 @@
+/.idea/
+/infra/roles/vagrant/vars
+/infra/vagrant/.vagrant/
+/infra/inventory/
+/infra/terraform/.terraform/
+/infra/terraform/terraform.tfstate.d/
+/infra/terraform/tmp/
+/infra/terraform/.terraform.lock.hcl
