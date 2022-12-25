@@ -17,3 +17,7 @@
   include_tasks: istio.yaml
   when: (operation == "istio")
 
+- name: Include K3s Istio tasks
+  include_tasks: control.yaml
+  when: (operation == "control")
+

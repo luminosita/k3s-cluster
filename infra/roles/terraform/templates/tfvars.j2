@@ -1,2 +1,2 @@
-environment = "{{ terraform['%s' | format(env)].environment }}"
+environment = "{{ inventory['%s' | format(env)].environment }}"
 module = "{{ '%s' | format(module) }}"
