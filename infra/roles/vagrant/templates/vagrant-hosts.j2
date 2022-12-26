@@ -2,11 +2,16 @@
 
 {% set f_env = '%s' | format(env) %}
 {% set gateway = inventory[f_env].gateway %}
+{% set n_type = inventory[f_env].network.type %}
+{% set n_interface = inventory[f_env].network.interface %}
 {% set ssh_host = inventory[f_env].ssh_host %}
 {% set hosts = inventory[f_env].hosts %}
 
 environment: {{ f_env }}
 gateway: {{ gateway }}
+network:
+  type: {{n_type}}
+  interface: {{n_interface}}
 ssh_host: {{ ssh_host }}
 hosts:
 {% for key, value in hosts.items() %}

@@ -5,6 +5,9 @@ inventory:
     environment: "staging"
     ssh_host: 172.16.*.*
     gateway: 172.16.191.2
+    network:
+      type: "public"
+      interface: "ens35"
     hosts:
       node1: 172.16.191.51
       node2: 172.16.191.52
