@@ -5,6 +5,7 @@ if (File.exists?(".vagrant/hosts.yaml"))
     cfg             = YAML.load_file(".vagrant/hosts.yaml")
 
     gateway         = cfg["gateway"]
+    ssh_host        = cfg["ssh_host"]
     environment     = cfg["environment"]
     hosts           = cfg["hosts"]
 else
@@ -51,6 +52,7 @@ Vagrant.configure("2") do |config|
             machine.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/id_rsa.pub"
             machine.vm.provision "ssh_keys", type: "shell" do |s|
                 s.path = "scripts/bootstrap.sh"
+                s.env =  { SSH_HOST: "#{ssh_host}" }
                 s.privileged = false
             end
         end
