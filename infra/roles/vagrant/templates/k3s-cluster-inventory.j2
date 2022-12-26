@@ -3,19 +3,19 @@
 {% set f_env = '%s' | format(env) %}
 {% set hosts = inventory[f_env].hosts %}
 
-{% for host in hosts %}
+{% for key, value in hosts.items() %}
 {% if loop.index == 1 %}
 k3s_control_nodes:
   hosts:
-    {{ host.name }}-{{ f_env }}:
-      ansible_host: {{ host.ip }}
+    {{ key }}-{{ f_env }}:
+      ansible_host: {{ value }}
   vars:
     ansible_user: vagrant
 k3s_worker_nodes:
   hosts:
 {% elif loop.index > 1 %}
-    {{ host.name }}-{{ f_env }}:
-      ansible_host: {{ host.ip }}
+    {{ key }}-{{ f_env }}:
+      ansible_host: {{ value }}
 {% endif %}
 {% endfor %}
   vars:

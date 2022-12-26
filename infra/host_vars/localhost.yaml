@@ -3,11 +3,8 @@ inventory:
     environment: "production"
   staging:
     environment: "staging"
-    gateway: 172.16.191.2
+    gateway: 172.16.191.1
     hosts:
-      - name: node1
-        ip: 172.16.191.51
-      - name: node2
-        ip: 172.16.191.52
-      - name: node3
-        ip: 172.16.191.53
+      node1: 172.16.191.51
+      node2: 172.16.191.52
+      node3: 172.16.191.53

@@ -4,7 +4,8 @@ case $1 in
     echo "positional arguments:"
     echo "  operation"
     echo "    cleanup               deletes all temporary and working folders"
-    echo "    inventory             init Ansible inventory and Vagrant environment"
+    echo "    vg-init               init Ansible inventory and Vagrant environment"
+    echo "    vg-bootstrap          bootstrap VMs"
     echo "    tf-init               initializes Terraform environment"
     echo "    tf-plan               creates plan for Terraform resources"
     echo "    tf-apply              applies changes to Terraform resources"
@@ -36,8 +37,11 @@ case $1 in
     if [ -f roles/vagrant/vars/main.yaml ]; then rm -rf roles/vagrant/vars/main.yaml; fi
     if [ -e inventory ]; then rm -rf inventory; fi
     ;;
-"inventory")
+"vg-init")
     ansible-playbook vagrant.yaml -e env=$2 -e operation=init
+    ;;
+"vg-bootstrap")
+    ansible-playbook vagrant.yaml -e env=$2 -e operation=bootstrap
     ;;
 "tf-init")
     ansible-playbook terraform.yaml -e env=$2 -e operation=init

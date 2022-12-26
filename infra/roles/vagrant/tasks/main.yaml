@@ -30,3 +30,34 @@
     dest: "{{ playbook_dir }}/inventory/k3s-cluster-inventory.yaml"
     trim_blocks: true
   when: (operation == "init")
+
+- name: Check Vagrant output file exists
+  ansible.builtin.stat: "path={{ playbook_dir }}/vagrant/.vagrant/output"
+  register: output_file_exists
+  when: (operation == "bootstrap")
+
+- fail: msg="Vagrant output file .vagrant/output does not exist"
+  when: (operation == "bootstrap" and not output_file_exists.stat.exists)
+
+- name: Create inventory vars
+  ansible.builtin.shell:
+    'cat {{ playbook_dir }}/vagrant/.vagrant/output | grep "SSH address" | sed -r "s/ *([a-z0-9-]*)[: a-zA-Z]*([0-9]*.[0-9]*.[0-9]*.[0-9]*).*/- \1: \2/"'
+  when: (operation == "bootstrap")
+  register: output
+
+#Runs bootstrap scripts in each VM shell. Reads for Vagrant output assigned IP addresses and reads inventory file
+#to get static IP to be assigned. Node name needs to be striped from environment suffix for that search to happen.
+- name: Bootstrap VMs
+  ansible.builtin.shell:
+    cmd:
+      f_name={{ item.key }}
+      dhcp_ip={{ item.value }}
+      static_ip={{ inventory[env].hosts[item.key | regex_replace("^(\w*).*", "\1")]}}
+      gateway={{ inventory[env].gateway | regex_replace("^(\w*).*", "\1")}}
+
+      'scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" {{ playbook_dir }}/vagrant/scripts/bootstrap.sh vagrant@$dhcp_ip:/home/vagrant/bootstrap.sh'
+      'scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" {{ playbook_dir }}/vagrant/scripts/netplan.sh vagrant@$dhcp_ip:/home/vagrant/netplan.sh'
+     # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'sh bootstrap.sh'
+     # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'IP_ADDR={{static_ip}} GATE=$gateway sh netplan.sh'
+  when: (operation == "bootstrap")
+  with_dict: "{{ output.stdout | from_yaml }}"

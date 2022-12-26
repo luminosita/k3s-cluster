@@ -1,12 +1,15 @@
 echo 'network:
   version: 2
   ethernets:
-    ens32:
+    ens35:
       dhcp4: no' > tmp
-echo "      addresses: [$IP_ADDR/24]" >> tmp
-echo "      gateway4: $GATE" >> tmp
-echo '      nameservers:
-        addresses: [8.8.8.8,8.8.4.4]' >> tmp
+echo "      addresses: " >> tmp
+echo "        - $IP_ADDR/24" >> tmp
+echo "      nameservers:" >> tmp
+echo "        addresses: [8.8.8.8,8.8.4.4]" >> tmp
+echo "      routes:" >> tmp
+echo "        - to: default" >> tmp
+echo "          via: $GATE" >> tmp
 
-#sudo mv tmp /etc/netplan/00-installer-config.yaml
-#sudo netplan apply
+sudo mv tmp /etc/netplan/50-vagrant.yaml
+sudo netplan apply

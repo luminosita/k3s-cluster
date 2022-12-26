@@ -8,31 +8,41 @@
 
 ### Create Cluster Nodes
 
+Define cluster nodes in `host_vars/localhost.yaml`
+
 Initialise Vagrant environment
 
 ```bash
-$ sh start.sh vg-init staging 3
+$ sh start.sh vg-init staging
 ```
-It will create`hosts` file in `vagrant/.vagrant` folder
+It will create `hosts.yaml` file in `vagrant/.vagrant` folder and `k3s-cluster-inventory.yaml` in `inventory` folder. `inventory/k3s-cluster-inventory.yaml` drives the rest of Ansible installations of hosts
 
-Create Vagrant VMs without provisioning. Shell provisioner causes some issues with `vmware_fusion` Vagrant provider
+For VirtualBox:
+```bash
+$ cd vagrant
+$ vagrant up
+```
+
+For VMWare Fusion:
+
+Create Vagrant VMs without provisioning. Shell provisioner causes some issues with `vmware_fusion` Vagrant provider. Creation of `.vagrant/output` is important
 
 ```bash
 $ cd vagrant
-$ vagrant up --no-provision
+$ vagrant up --no-provision > .vagrant/output
 ```
 
-After successful creation of Vagrant images and hosts run provisioning
+After successful VM start run provision
 
 ```bash
+$ cd vagrant
 $ vagrant provision
-$ cd ..
 ```
 
-Create Ansible inventory file `inventory/k3s-cluster-inventory.yaml`
+Bootstrap VMs. Solves the issue with `vmware_fusion` Vagrant provider and static IP addresses for VMs
 
 ```bash
-$ sh start.sh vg-inventory staging
+$ sh start.sh vg-bootstrap staging
 ```
 
 ### Install K3s Componentes
