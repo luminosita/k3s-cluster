@@ -1,7 +1,7 @@
 echo 'network:
   version: 2
   ethernets:
-    ens35:
+    ens32:
       dhcp4: no' > tmp
 echo "      addresses: " >> tmp
 echo "        - $IP_ADDR/24" >> tmp
@@ -11,5 +11,5 @@ echo "      routes:" >> tmp
 echo "        - to: default" >> tmp
 echo "          via: $GATE" >> tmp
 
-sudo mv tmp /etc/netplan/50-vagrant.yaml
+sudo mv tmp /etc/netplan/40-vagrant.yaml
 sudo netplan apply
