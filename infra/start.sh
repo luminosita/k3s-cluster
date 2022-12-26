@@ -1,6 +1,6 @@
 case $1 in
 "help")
-    echo "usage: start.sh operation environment [vm_count|module]"
+    echo "usage: start.sh operation environment [module list]"
     echo "positional arguments:"
     echo "  operation"
     echo "    cleanup               deletes all temporary and working folders"
@@ -19,8 +19,6 @@ case $1 in
     echo "    development           development environment"
     echo "    staging               staging environment"
     echo "    production            production environment"
-    echo "  "
-    echo "  vm_count                number of VMs to create"
     echo "  "
     echo "  module"
     echo "    k8s-dashboard         Kubernetes Dashboard"

@@ -48,6 +48,13 @@ $ sh start.sh vg-bootstrap staging
 
 $ cd vagrant/.vagrant/scripts
 $ sh upload-staging.sh
+$ sh bootstrap-hosts-staging.sh
+```
+
+For testing new static IP addresses use the following script
+
+```bash
+$ sh test-hosts-staging.sh
 ```
 
 ### Install K3s Componentes
