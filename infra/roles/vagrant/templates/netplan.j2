@@ -5,10 +5,10 @@ network:
   ethernets:
     {{net_int}}:
       dhcp4: no
-        addresses:
-          - {{static_ip}}/24
-        nameservers:
-          addresses: [8.8.8.8,8.8.4.4]
-        routes:
-          - to: default
-            via: {{gateway}}
+      addresses:
+        - {{static_ip}}/24
+      nameservers:
+        addresses: [8.8.8.8,8.8.4.4]
+      routes:
+        - to: default
+          via: {{gateway}}
