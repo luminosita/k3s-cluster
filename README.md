@@ -2,9 +2,18 @@
 
 ##### Requirements
 
-- Ansible
+- Ansible 
 - Vagrant
 - Terraform
+- Vagrant VMWare plugin
+
+```bash
+$ brew install ansible
+$ brew install vagrant
+$ brew install terraform
+
+$ vagrant plugin install vagrant-vmware-desktop
+```
 
 ### Create Cluster Nodes
 
