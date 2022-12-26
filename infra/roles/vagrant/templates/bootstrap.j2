@@ -26,5 +26,5 @@ echo 'Setting static IP address'
 
 echo 'Network type: {{network_type}}, interface: {{netplan_id}}'
 
-sudo mv netplan-{{f_name}} /etc/netplan/{{netplan_id}}-vagrant.yaml
+sudo mv netplan-{{f_name}}.yaml /etc/netplan/{{netplan_id}}-vagrant.yaml
 sudo netplan apply
