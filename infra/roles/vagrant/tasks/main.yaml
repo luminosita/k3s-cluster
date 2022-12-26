@@ -51,6 +51,7 @@
     msg: "{{ dhcp_ips }}"
   vars:
     dhcp_ips: "{{ lookup('file', 'vagrant/.vagrant/dhcp_ips.yaml') | from_yaml }}"
+  when: (operation == "bootstrap")
 
 #Runs bootstrap scripts in each VM shell. Reads for Vagrant output assigned IP addresses and reads inventory file
 #to get static IP to be assigned.
