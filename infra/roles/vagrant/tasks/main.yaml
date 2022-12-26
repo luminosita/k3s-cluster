@@ -60,8 +60,8 @@
     cmd:
       echo "export IP_ADDR={{static_ip}}; export GATE={{gateway}}" > ".vagrant/env-{{name}}.sh"
 
-      scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/bootstrap.sh vagrant@$dhcp_ip:/home/vagrant/bootstrap.sh
-      scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/netplan.sh vagrant@$dhcp_ip:/home/vagrant/netplan.sh
+     # scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/bootstrap.sh vagrant@$dhcp_ip:/home/vagrant/bootstrap.sh
+     # scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/netplan.sh vagrant@$dhcp_ip:/home/vagrant/netplan.sh
      # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'sh bootstrap.sh'
      # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'IP_ADDR={{static_ip}} GATE=$gateway sh netplan.sh'
   when: (operation == "bootstrap")
