@@ -38,20 +38,16 @@ Create Vagrant VMs without provisioning. Shell provisioner causes some issues wi
 
 ```bash
 $ cd vagrant
-$ vagrant up --no-provision > .vagrant/output
+$ vagrant up > .vagrant/output | tail -f .vagrant/output
 ```
 
-After successful VM start run provision
-
-```bash
-$ cd vagrant
-$ vagrant provision
-```
-
-Bootstrap VMs. Solves the issue with `vmware_fusion` Vagrant provider and static IP addresses for VMs
+Bootstrap VMs. Solves the issue with `vmware_fusion` Vagrant provider and static IP addresses for VMs. It creates provisioning scripts to configure static IP addresses.
 
 ```bash
 $ sh start.sh vg-bootstrap staging
+
+$ cd vagrant/.vagrant/scripts
+$ sh upload-staging.sh
 ```
 
 ### Install K3s Componentes
