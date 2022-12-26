@@ -31,37 +31,48 @@
     trim_blocks: true
   when: (operation == "init")
 
-#- name: Check Vagrant output file exists
-#  ansible.builtin.stat: "path={{ playbook_dir }}/vagrant/.vagrant/output"
-#  register: output_file_exists
-#  when: (operation == "bootstrap")
-#
-#- fail: msg="Vagrant output file .vagrant/output does not exist"
-#  when: (operation == "bootstrap" and not output_file_exists.stat.exists)
-#
-#- name: Create inventory vars
-#  ansible.builtin.shell:
-#    'cat {{ playbook_dir }}/vagrant/.vagrant/output | grep "SSH address" | sed -r "s/ *([a-z0-9-]*)[: a-zA-Z]*([0-9]*.[0-9]*.[0-9]*.[0-9]*).*/- \1: \2/"'
-#  when: (operation == "bootstrap")
-#  register: output
+- name: Check Vagrant output file exists
+  ansible.builtin.stat: "path={{ playbook_dir }}/vagrant/.vagrant/output"
+  register: output_file_exists
+  when: (operation == "bootstrap")
 
+- fail: msg="Vagrant output file .vagrant/output does not exist"
+  when: (operation == "bootstrap" and not output_file_exists.stat.exists)
+
+- name: Create inventory vars
+  ansible.builtin.shell:
+    cmd: "cat output | grep \"SSH address\" | sed -r \"s/ *([a-z0-9-]*)[: a-zA-Z]*([0-9]*.[0-9]*.[0-9]*.[0-9]*).*/\\1: \\2/\" > dhcp_ips.yaml"
+  when: (operation == "bootstrap")
+  args:
+    chdir: "{{ playbook_dir }}/vagrant/.vagrant"
+
+- name: Show DHCP IPs
+  debug:
+    msg: "{{ dhcp_ips }}"
+  vars:
+    dhcp_ips: "{{ lookup('file', 'vagrant/.vagrant/dhcp_ips.yaml') | from_yaml }}"
 
 #Runs bootstrap scripts in each VM shell. Reads for Vagrant output assigned IP addresses and reads inventory file
-#to get static IP to be assigned. Node name needs to be striped from environment suffix for that search to happen.
+#to get static IP to be assigned.
 - name: Bootstrap VMs
   ansible.builtin.shell:
     cmd:
-      name={{ item.key }}
-      static_ip={{ item.value }}
-      gateway={{ inventory[env].gateway }}
+      echo "export IP_ADDR={{static_ip}}; export GATE={{gateway}}" > ".vagrant/env-{{name}}.sh"
 
-      echo "export IP_ADDR=$static_ip; export GATE=$gateway" >> "{{ playbook_dir }}/vagrant/.vagrant/env-$name.sh"
-
-     # 'scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" {{ playbook_dir }}/vagrant/scripts/bootstrap.sh vagrant@$dhcp_ip:/home/vagrant/bootstrap.sh'
-     # 'scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" {{ playbook_dir }}/vagrant/scripts/netplan.sh vagrant@$dhcp_ip:/home/vagrant/netplan.sh'
+      scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/bootstrap.sh vagrant@$dhcp_ip:/home/vagrant/bootstrap.sh
+      scp -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" scripts/netplan.sh vagrant@$dhcp_ip:/home/vagrant/netplan.sh
      # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'sh bootstrap.sh'
      # ssh -i ~/.vagrant.d/insecure_private_key -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" vagrant@$dhcp_ip 'IP_ADDR={{static_ip}} GATE=$gateway sh netplan.sh'
   when: (operation == "bootstrap")
+  vars:
+    name: "{{ item.key }}"
+    static_ip: "{{ item.value }}"
+    gateway: "{{ inventory[env].gateway }}"
+    dhcp_ip: "{{ dhcp_ips[f_name] }}"
+    f_name: "{{ item.key }}-{{ env }}"
+    dhcp_ips: "{{ lookup('ansible.builtin.file', 'vagrant/.vagrant/dhcp_ips.yaml') | from_yaml }}"
   with_dict: "{{ inventory[env].hosts }}"
+  args:
+    chdir: "{{ playbook_dir }}/vagrant"
   register: output
 
