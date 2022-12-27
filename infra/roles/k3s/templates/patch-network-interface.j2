@@ -1,0 +1,6 @@
+{% set net_int = network.interface %}
+
+spec:
+  calicoNetwork:
+    nodeAddressAutodetectionV4:
+      interface: {{net_int}}

@@ -44,6 +44,15 @@
     - kubectl create -f https://docs.projectcalico.org/manifests/custom-resources.yaml
   when: k3s_calico_status.resources is defined and k3s_calico_status.resources|length == 0
 
+- name: Patch Calico for proper network interface
+  kubernetes.core.k8s:
+    state: patched
+    kind: Installation
+    name: default
+    namespace: tigera-operator
+    template: 'templates/patch-network-interface.j2'
+##  when: k3s_calico_status.resources is defined and k3s_calico_status.resources|length == 0
+
 - name: Wait for Calico Pod to be in Running status
   kubernetes.core.k8s_info:
     kind: Pod

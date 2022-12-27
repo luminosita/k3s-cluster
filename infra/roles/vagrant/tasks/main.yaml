@@ -31,6 +31,20 @@
     trim_blocks: true
   when: (operation == "init")
 
+- name: Make K3s role vars folder
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/roles/k3s/vars"
+    state: directory
+    mode: '0755'
+  when: (operation == "init")
+
+- name: Create K3s role vars
+  template:
+    src: templates/k3s-vars.j2
+    dest: "{{ playbook_dir }}/roles/k3s/vars/main.yaml"
+    trim_blocks: true
+  when: (operation == "init")
+
 - name: Check Vagrant output file exists
   ansible.builtin.stat: "path={{ playbook_dir }}/vagrant/.vagrant/output"
   register: output_file_exists
@@ -60,7 +74,7 @@
     dhcp_ips: "{{ lookup('file', 'vagrant/.vagrant/dhcp_ips.yaml') | from_yaml }}"
   when: (operation == "bootstrap")
 
-- name: Make vagrant tmp folder
+- name: Make vagrant scripts folder
   ansible.builtin.file:
     path: "{{ playbook_dir }}/vagrant/.vagrant/scripts"
     state: directory
