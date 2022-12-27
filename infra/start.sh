@@ -9,7 +9,6 @@ case $1 in
     echo "    tf-init               initializes Terraform environment"
     echo "    tf-plan               creates plan for Terraform resources"
     echo "    tf-apply              applies changes to Terraform resources"
-    echo "    tf-destroys           destroys Terraform resources"
     echo "    k3s-bootstrap         bootstraps K3s VMs"
     echo "    k3s-server            deployes K3s Server"
     echo "    k3s-agent             deployes K3s Agent"
@@ -43,9 +42,6 @@ case $1 in
     ;;
 "tf-init")
     ansible-playbook terraform.yaml -e env=$2 -e operation=init
-    ;;
-"tf-destroy")
-    ansible-playbook terraform.yaml -e env=$2 -e operation=destroy
     ;;
 "tf-apply")
     ansible-playbook terraform.yaml -e env=$2 -e operation=apply

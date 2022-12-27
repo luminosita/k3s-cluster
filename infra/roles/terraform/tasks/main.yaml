@@ -48,17 +48,3 @@
   debug:
     msg: "{{ create.stdout }}"
   when: (operation == "apply")
-
-- name: Destroy resources
-  shell: |
-    cd {{ playbook_dir }}/terrafform;
-    terraform workspace new {{ env }}
-    terraform workspace select {{ env }}
-    terraform destroy -var-file=tmp/env.tfvars -auto-approve
-  when: (operation == "destroy")
-  register: destroy
-
-- name: 'Display output: Destroy resources'
-  debug:
-    msg: "{{ destroy.stdout }}"
-  when: (operation == "destroy")
