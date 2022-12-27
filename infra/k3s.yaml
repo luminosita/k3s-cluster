@@ -1,4 +1,4 @@
 - name: K3s Bootstrap
-  hosts: all
+  hosts: "{{ targetHosts }}"
   roles:
     - k3s

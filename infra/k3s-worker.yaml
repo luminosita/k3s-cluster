@@ -1,4 +1,0 @@
-- name: K3s Worker nodes
-  hosts: k3s_worker_nodes
-  roles:
-    - k3s

@@ -31,7 +31,8 @@ case $1 in
     if [ -e terraform/.terraform.lock.hcl ]; then rm  terraform/.terraform.lock.hcl; fi
     if [ -f terraform/tmp ]; then rm -rf terraform/tmp; fi
     if [ -e vagrant/.vagrant ]; then rm -rf vagrant/.vagrant; fi
-    if [ -f roles/vagrant/vars/main.yaml ]; then rm -rf roles/vagrant/vars/main.yaml; fi
+    if [ -e roles/vagrant/vars ]; then rm -rf roles/vagrant/vars; fi
+    if [ -e roles/k3s/vars ]; then rm -rf roles/k3s/vars; fi
     if [ -e inventory ]; then rm -rf inventory; fi
     ;;
 "vg-init")
@@ -57,15 +58,15 @@ case $1 in
     fi
     ;;
 "k3s-bootstrap")
-    ansible-playbook k3s-all.yaml -e env=$2 -e operation=bootstrap -i inventory/k3s-cluster-inventory.yaml
+    ansible-playbook k3s.yaml -e targetHosts=all -e env=$2 -e operation=bootstrap -i inventory/k3s-cluster-inventory.yaml
     ;;
 "k3s-server")
-    ansible-playbook k3s-control.yaml -e env=$2 -e operation=server -i inventory/k3s-cluster-inventory.yaml
+    ansible-playbook k3s.yaml -e targetHosts=k3s_control_nodes -e env=$2 -e operation=server -i inventory/k3s-cluster-inventory.yaml
     ;;
 "k3s-agent")
-    ansible-playbook k3s-worker.yaml -e env=$2 -e operation=agent -i inventory/k3s-cluster-inventory.yaml
+    ansible-playbook k3s.yaml -e targetHosts=k3s_worker_nodes -e env=$2 -e operation=agent -i inventory/k3s-cluster-inventory.yaml
     ;;
 "k3s-istio")
-    ansible-playbook k3s-control.yaml -e env=$2 -e operation=istio -i inventory/k3s-cluster-inventory.yaml
+    ansible-playbook k3s.yaml -e targetHosts=k3s_control_nodes -e env=$2 -e operation=istio -i inventory/k3s-cluster-inventory.yaml
     ;;
 esac

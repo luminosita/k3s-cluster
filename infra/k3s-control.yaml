@@ -1,4 +1,0 @@
-- name: K3s Control nodes
-  hosts: k3s_control_nodes
-  roles:
-    - k3s
