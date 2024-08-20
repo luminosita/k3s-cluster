@@ -7,3 +7,4 @@
 /infra/terraform/tmp/
 /infra/terraform/.terraform.lock.hcl
 /infra/roles/k3s/vars/main.yaml
+.DS_Store
